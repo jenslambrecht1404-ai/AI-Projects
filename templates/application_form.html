@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Bewerbung bearbeiten' if app else 'Neue Bewerbung' }} – Bewerbungs-Manager{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="header-row">
+        <h1>{{ 'Bewerbung bearbeiten' if app else 'Neue Bewerbung' }}</h1>
+        {% if app %}
+        <form method="POST" action="{{ url_for('delete_application', app_id=app.id) }}"
+              onsubmit="return confirm('Bewerbung wirklich löschen?')">
+            <button type="submit" class="btn btn-danger btn-small">Löschen</button>
+        </form>
+        {% endif %}
+    </div>
+
+    <form method="POST" class="form" id="app-form">
+        <div class="form-row">
+            <div class="form-group">
+                <label for="company">Unternehmen *</label>
+                <input type="text" id="company" name="company" required
+                       value="{{ app.company if app else '' }}">
+            </div>
+            <div class="form-group">
+                <label for="position">Position *</label>
+                <input type="text" id="position" name="position" required
+                       value="{{ app.position if app else '' }}">
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label for="contact_email">Kontakt-E-Mail</label>
+                <input type="email" id="contact_email" name="contact_email"
+                       value="{{ app.contact_email if app else '' }}">
+            </div>
+            {% if app %}
+            <div class="form-group">
+                <label for="status">Status</label>
+                <select id="status" name="status">
+                    {% for key, label in status_options %}
+                    <option value="{{ key }}" {{ 'selected' if app.status == key else '' }}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="form-group">
+            <label for="job_description">Stellenbeschreibung</label>
+            <textarea id="job_description" name="job_description" rows="6"
+                      placeholder="Stellenanzeige hier einfügen ...">{{ app.job_description if app else '' }}</textarea>
+        </div>
+
+        {% if app %}
+        <div class="form-group">
+            <div class="label-row">
+                <label for="cover_letter">Anschreiben</label>
+                <button type="button" id="generate-btn" class="btn btn-secondary btn-small">
+                    Mit KI generieren
+                </button>
+            </div>
+            <textarea id="cover_letter" name="cover_letter" rows="14"
+                      placeholder="Anschreiben hier eingeben oder per KI generieren lassen ...">{{ app.cover_letter if app else '' }}</textarea>
+        </div>
+        {% endif %}
+
+        <div class="form-group">
+            <label for="notes">Notizen</label>
+            <textarea id="notes" name="notes" rows="3"
+                      placeholder="Interne Notizen ...">{{ app.notes if app else '' }}</textarea>
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Speichern</button>
+            {% if app and app.cover_letter and app.contact_email %}
+            <button type="button" id="send-btn" class="btn btn-success"
+                    onclick="if(confirm('Bewerbung jetzt per E-Mail versenden?')) window.location='{{ url_for('send_email', app_id=app.id) }}'">
+                Per E-Mail senden
+            </button>
+            {% endif %}
+            <a href="{{ url_for('index') }}" class="btn btn-secondary">Zurück</a>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{% if app %}
+<script>
+document.getElementById('generate-btn')?.addEventListener('click', async function() {
+    const btn = this;
+    btn.disabled = true;
+    btn.textContent = 'Generiere ...';
+
+    try {
+        const resp = await fetch('{{ url_for("generate", app_id=app.id) }}', {method: 'POST'});
+        const data = await resp.json();
+        if (data.error) {
+            alert('Fehler: ' + data.error);
+        } else {
+            document.getElementById('cover_letter').value = data.cover_letter;
+        }
+    } catch (e) {
+        alert('Netzwerkfehler: ' + e.message);
+    } finally {
+        btn.disabled = false;
+        btn.textContent = 'Mit KI generieren';
+    }
+});
+
+document.getElementById('send-btn')?.addEventListener('click', function(e) {
+    e.preventDefault();
+    if (confirm('Bewerbung jetzt per E-Mail versenden?')) {
+        window.location = '{{ url_for("send_email", app_id=app.id) }}';
+    }
+});
+</script>
+{% endif %}
+{% endblock %}

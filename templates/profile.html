@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}Profil – Bewerbungs-Manager{% endblock %}
+
+{% block content %}
+<div class="container container-narrow">
+    <h1>Mein Profil</h1>
+    <p class="subtitle">Diese Daten werden für die Anschreiben-Generierung verwendet.</p>
+
+    <form method="POST" class="form">
+        <div class="form-group">
+            <label for="full_name">Vollständiger Name *</label>
+            <input type="text" id="full_name" name="full_name" required
+                   value="{{ profile.full_name if profile else '' }}">
+        </div>
+        <div class="form-group">
+            <label for="email">E-Mail *</label>
+            <input type="email" id="email" name="email" required
+                   value="{{ profile.email if profile else '' }}">
+        </div>
+        <div class="form-group">
+            <label for="phone">Telefon</label>
+            <input type="tel" id="phone" name="phone"
+                   value="{{ profile.phone if profile else '' }}">
+        </div>
+        <div class="form-group">
+            <label for="address">Adresse</label>
+            <textarea id="address" name="address" rows="2">{{ profile.address if profile else '' }}</textarea>
+        </div>
+        <div class="form-group">
+            <label for="resume_text">Lebenslauf / Qualifikationen</label>
+            <textarea id="resume_text" name="resume_text" rows="10"
+                      placeholder="Bildung, Berufserfahrung, Fähigkeiten, Sprachen ...">{{ profile.resume_text if profile else '' }}</textarea>
+        </div>
+        <button type="submit" class="btn btn-primary">Profil speichern</button>
+    </form>
+</div>
+{% endblock %}
