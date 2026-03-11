@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}Interview-Vorbereitung{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1>Interview-Vorbereitung</h1>
+        <p class="subtitle">KI-gestützte Vorbereitung mit relevanten Fragen und Antwortvorschlägen.</p>
+    </div>
+    <a href="{{ url_for('new_interview') }}" class="btn btn-primary">+ Neue Session</a>
+</div>
+
+<div class="grid-2">
+    <div class="card">
+        <h2>Meine Sessions</h2>
+        {% if sessions %}
+        <div class="session-list">
+            {% for s in sessions %}
+            <a href="{{ url_for('view_interview', session_id=s.id) }}" class="session-item">
+                <strong>{{ s.company_name }}</strong>
+                <span>{{ s.position }}{% if s.session_date %} · {{ s.session_date }}{% endif %}</span>
+            </a>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state-small">
+            <p>Noch keine Sessions. <a href="{{ url_for('new_interview') }}">Neue Session erstellen!</a></p>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="card">
+        <p style="text-align:center; padding:3rem 1rem; color:var(--gray-500)">
+            Wählen Sie eine Session aus der Liste oder erstellen Sie eine neue.
+        </p>
+    </div>
+</div>
+{% endblock %}

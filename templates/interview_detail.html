@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}Interview: {{ session.company_name }}{% endblock %}
+
+{% block content %}
+<div class="header-row">
+    <div>
+        <h1>{{ session.company_name }}</h1>
+        <p class="subtitle">{{ session.position }}</p>
+    </div>
+    <a href="{{ url_for('interview_list') }}" class="btn btn-secondary">Zurück</a>
+</div>
+
+{% if questions %}
+{% for q in questions %}
+<div class="qa-card">
+    <div class="qa-category">{{ q.get('category', 'Allgemein') }}</div>
+    <div class="qa-question">{{ q.question }}</div>
+    <div class="qa-answer">{{ q.suggested_answer }}</div>
+</div>
+{% endfor %}
+{% else %}
+<div class="card">
+    <p>Keine Fragen generiert. Bitte versuche es erneut.</p>
+</div>
+{% endif %}
+{% endblock %}

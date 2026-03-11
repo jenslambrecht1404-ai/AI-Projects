@@ -7,30 +7,60 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
-    <nav>
-        <div class="nav-container">
-            <a href="{{ url_for('index') }}" class="logo">Bewerbungs-Manager</a>
-            <div class="nav-links">
-                <a href="{{ url_for('index') }}">Dashboard</a>
-                <a href="{{ url_for('new_application') }}">Neue Bewerbung</a>
-                <a href="{{ url_for('profile') }}">Profil</a>
+    <div class="layout">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <a href="{{ url_for('index') }}" class="logo">Jens Lambrecht</a>
+                <span class="sidebar-subtitle">Digital Transformation & AI Strategy</span>
             </div>
-        </div>
-    </nav>
+            <nav class="sidebar-nav">
+                <a href="{{ url_for('index') }}" class="{{ 'active' if request.endpoint == 'index' }}">
+                    <span class="nav-icon">&#127968;</span> Übersicht
+                </a>
+                <a href="{{ url_for('profile') }}" class="{{ 'active' if request.endpoint == 'profile' }}">
+                    <span class="nav-icon">&#128100;</span> Profil & Skills
+                </a>
+                <a href="{{ url_for('applications_list') }}" class="{{ 'active' if request.endpoint in ('applications_list','new_application','edit_application') }}">
+                    <span class="nav-icon">&#128196;</span> Bewerbungen
+                </a>
+                <a href="{{ url_for('companies') }}" class="{{ 'active' if request.endpoint in ('companies','new_company','edit_company') }}">
+                    <span class="nav-icon">&#127970;</span> Zielunternehmen
+                </a>
+                <a href="{{ url_for('strategy') }}" class="{{ 'active' if request.endpoint == 'strategy' }}">
+                    <span class="nav-icon">&#127760;</span> Strategie
+                </a>
+                <a href="{{ url_for('email_templates') }}" class="{{ 'active' if request.endpoint == 'email_templates' }}">
+                    <span class="nav-icon">&#9993;</span> E-Mail Vorlagen
+                </a>
+                <a href="{{ url_for('ki_generator') }}" class="{{ 'active' if request.endpoint == 'ki_generator' }}">
+                    <span class="nav-icon">&#10024;</span> KI-Generator
+                </a>
+                <a href="{{ url_for('interview_list') }}" class="{{ 'active' if request.endpoint in ('interview_list','new_interview','view_interview') }}">
+                    <span class="nav-icon">&#128172;</span> Interview-Vorbereitung
+                </a>
+                <a href="{{ url_for('analytics') }}" class="{{ 'active' if request.endpoint == 'analytics' }}">
+                    <span class="nav-icon">&#128200;</span> Analytics
+                </a>
+            </nav>
+            <div class="sidebar-footer">
+                <span>&#128205; München / Sevilla</span>
+            </div>
+        </aside>
 
-    <main>
-        {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-        <div class="flash-messages">
-            {% for category, message in messages %}
-            <div class="flash flash-{{ category }}">{{ message }}</div>
-            {% endfor %}
-        </div>
-        {% endif %}
-        {% endwith %}
+        <main class="main-content">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+            <div class="flash-messages">
+                {% for category, message in messages %}
+                <div class="flash flash-{{ category }}">{{ message }}</div>
+                {% endfor %}
+            </div>
+            {% endif %}
+            {% endwith %}
 
-        {% block content %}{% endblock %}
-    </main>
+            {% block content %}{% endblock %}
+        </main>
+    </div>
 
     {% block scripts %}{% endblock %}
 </body>

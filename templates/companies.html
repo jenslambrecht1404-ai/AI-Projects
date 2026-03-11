@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}Zielunternehmen – Bewerbungs-Manager{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1>Zielunternehmen</h1>
+        <p class="subtitle">Vollständige Datenbank aller identifizierten Unternehmen.</p>
+    </div>
+    <a href="{{ url_for('new_company') }}" class="btn btn-primary">+ Unternehmen</a>
+</div>
+
+<div class="tabs" style="margin-bottom:1.5rem">
+    <a href="{{ url_for('companies') }}" class="tab {{ 'active' if not current_strategy }}">Alle</a>
+    <a href="{{ url_for('companies', strategy='de_remote') }}" class="tab {{ 'active' if current_strategy == 'de_remote' }}">Deutschland (Remote)</a>
+    <a href="{{ url_for('companies', strategy='es_lokal') }}" class="tab {{ 'active' if current_strategy == 'es_lokal' }}">Spanien (Lokal)</a>
+</div>
+
+{% if companies %}
+<div class="grid-3">
+    {% for c in companies %}
+    <div class="company-card">
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:0.3rem">
+            <h3>{{ c.name }}</h3>
+            {% if c.priority == 'top' %}<span class="badge badge-top">Top</span>{% endif %}
+            {% if c.priority == 'hoch' %}<span class="badge badge-hoch">Hoch</span>{% endif %}
+        </div>
+        <div class="meta">{{ c.city }}, {{ c.country }}{% if c.industry %} · {{ c.industry }}{% endif %}</div>
+        <div style="margin-bottom:0.5rem">
+            <span class="badge badge-strategy-{{ c.strategy }}">{{ 'DE Remote' if c.strategy == 'de_remote' else 'ES Lokal' }}</span>
+            <span class="badge badge-{{ c.status }}">{{ c.status | title }}</span>
+        </div>
+        {% if c.notes %}<div class="company-card note">{{ c.notes }}</div>{% endif %}
+        <div style="margin-top:0.75rem; display:flex; gap:0.5rem">
+            <a href="{{ url_for('edit_company', cid=c.id) }}" class="btn btn-secondary btn-small">Bearbeiten</a>
+            {% if c.career_url %}<a href="{{ c.career_url }}" target="_blank" class="btn btn-secondary btn-small">Karriereseite</a>{% endif %}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="empty-state">
+    <h2>Keine Unternehmen gefunden</h2>
+    <p>Füge Zielunternehmen hinzu oder ändere den Filter.</p>
+</div>
+{% endif %}
+{% endblock %}

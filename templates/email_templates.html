@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}E-Mail Vorlagen{% endblock %}
+
+{% block content %}
+<h1>E-Mail-Vorlagen</h1>
+<p class="subtitle">Professionelle Vorlagen für jede Phase des Bewerbungsprozesses. Einfach kopieren und anpassen.</p>
+
+<div class="tabs" style="margin-bottom:1.5rem">
+    <a href="{{ url_for('email_templates') }}" class="tab {{ 'active' if not current_language }}">Alle</a>
+    {% for key, label in language_options %}
+    <a href="{{ url_for('email_templates', language=key) }}" class="tab {{ 'active' if current_language == key }}">{{ label }}</a>
+    {% endfor %}
+</div>
+
+<div class="grid-2">
+    {% for t in templates %}
+    <div class="template-card">
+        <button class="copy-btn" onclick="copyTemplate({{ t.id }})">Kopieren</button>
+        <h3>{{ t.name }}</h3>
+        <div class="template-subject">{{ t.subject }}</div>
+        <div class="template-body" id="template-{{ t.id }}">{{ t.body }}</div>
+    </div>
+    {% else %}
+    <div class="empty-state" style="grid-column:1/-1">
+        <p>Keine Vorlagen gefunden.</p>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function copyTemplate(id) {
+    const text = document.getElementById('template-' + id).innerText;
+    navigator.clipboard.writeText(text).then(() => {
+        const btn = event.target;
+        btn.textContent = 'Kopiert!';
+        setTimeout(() => btn.textContent = 'Kopieren', 2000);
+    });
+}
+</script>
+{% endblock %}

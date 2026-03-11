@@ -1,67 +1,77 @@
 {% extends "base.html" %}
-{% block title %}Dashboard – Bewerbungs-Manager{% endblock %}
+{% block title %}Übersicht – Bewerbungs-Manager{% endblock %}
 
 {% block content %}
-<div class="container">
-    <div class="header-row">
-        <h1>Meine Bewerbungen</h1>
-        <a href="{{ url_for('new_application') }}" class="btn btn-primary">+ Neue Bewerbung</a>
+<div class="page-header">
+    <div>
+        <h1>Übersicht</h1>
+        <p class="subtitle">Open for Opportunities starting Sept 2026</p>
     </div>
+    <a href="{{ url_for('new_application') }}" class="btn btn-primary">+ Neue Bewerbung</a>
+</div>
 
-    {% if applications %}
-    <div class="stats">
-        <div class="stat-card">
-            <span class="stat-number">{{ applications | length }}</span>
-            <span class="stat-label">Gesamt</span>
-        </div>
-        <div class="stat-card">
-            <span class="stat-number">{{ applications | selectattr('status', 'equalto', 'gesendet') | list | length }}</span>
-            <span class="stat-label">Gesendet</span>
-        </div>
-        <div class="stat-card">
-            <span class="stat-number">{{ applications | selectattr('status', 'equalto', 'einladung') | list | length + applications | selectattr('status', 'equalto', 'vorstellungsgespraech') | list | length }}</span>
-            <span class="stat-label">Im Prozess</span>
-        </div>
-        <div class="stat-card">
-            <span class="stat-number">{{ applications | selectattr('status', 'equalto', 'angebot') | list | length }}</span>
-            <span class="stat-label">Angebote</span>
-        </div>
+<div class="stats">
+    <div class="stat-card">
+        <span class="stat-number">{{ stats.total }}</span>
+        <span class="stat-label">Bewerbungen</span>
     </div>
+    <div class="stat-card">
+        <span class="stat-number">{{ stats.sent }}</span>
+        <span class="stat-label">Gesendet</span>
+    </div>
+    <div class="stat-card">
+        <span class="stat-number">{{ stats.interview }}</span>
+        <span class="stat-label">Interviews</span>
+    </div>
+    <div class="stat-card">
+        <span class="stat-number">{{ stats.offers }}</span>
+        <span class="stat-label">Angebote</span>
+    </div>
+</div>
 
-    <table class="app-table">
-        <thead>
-            <tr>
-                <th>Unternehmen</th>
-                <th>Position</th>
-                <th>Status</th>
-                <th>Aktualisiert</th>
-                <th>Aktionen</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for app in applications %}
-            <tr>
-                <td><strong>{{ app.company }}</strong></td>
+<div class="grid-2">
+    <div class="card">
+        <h2>Aktuelle Bewerbungen</h2>
+        {% if applications %}
+        <table class="app-table">
+            <thead><tr><th>Unternehmen</th><th>Position</th><th>Status</th></tr></thead>
+            <tbody>
+            {% for app in applications[:8] %}
+            <tr onclick="window.location='{{ url_for('edit_application', app_id=app.id) }}'" style="cursor:pointer">
+                <td><strong>{{ app.company_name }}</strong></td>
                 <td>{{ app.position }}</td>
                 <td>
-                    <span class="badge badge-{{ app.status }}">
-                        {% for key, label in status_options if key == app.status %}{{ label }}{% endfor %}
-                    </span>
-                </td>
-                <td>{{ app.updated_at[:10] }}</td>
-                <td>
-                    <a href="{{ url_for('edit_application', app_id=app.id) }}" class="btn btn-small">Bearbeiten</a>
+                    <span class="badge badge-{{ app.status }}">{{ app.status | replace('_', ' ') | title }}</span>
+                    <span class="badge badge-strategy-{{ app.strategy }}">{{ 'DE' if app.strategy == 'de_remote' else 'ES' }}</span>
                 </td>
             </tr>
             {% endfor %}
-        </tbody>
-    </table>
-    {% else %}
-    <div class="empty-state">
-        <h2>Noch keine Bewerbungen</h2>
-        <p>Erstelle deine erste Bewerbung, um loszulegen.</p>
-        <a href="{{ url_for('new_application') }}" class="btn btn-primary">Erste Bewerbung erstellen</a>
+            </tbody>
+        </table>
+        {% else %}
+        <div class="empty-state-small">
+            <p>Noch keine Bewerbungen. <a href="{{ url_for('new_application') }}">Jetzt starten!</a></p>
+        </div>
+        {% endif %}
     </div>
-    {% endif %}
+
+    <div class="card">
+        <h2>Top-Zielunternehmen</h2>
+        {% for c in companies[:7] %}
+        <div class="company-row">
+            <div>
+                <strong>{{ c.name }}</strong><br>
+                <span class="text-muted">{{ c.city }}, {{ c.country }}</span>
+            </div>
+            <div>
+                {% if c.priority == 'top' %}<span class="badge badge-top">Top</span>{% endif %}
+                {% if c.priority == 'hoch' %}<span class="badge badge-hoch">Hoch</span>{% endif %}
+                <span class="badge badge-strategy-{{ c.strategy }}">{{ 'DE' if c.strategy == 'de_remote' else 'ES' }}</span>
+            </div>
+        </div>
+        {% else %}
+        <div class="empty-state-small"><p><a href="{{ url_for('new_company') }}">Zielunternehmen hinzufügen</a></p></div>
+        {% endfor %}
+    </div>
 </div>
 {% endblock %}

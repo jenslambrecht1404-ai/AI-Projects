@@ -1,37 +1,158 @@
 {% extends "base.html" %}
-{% block title %}Profil – Bewerbungs-Manager{% endblock %}
+{% block title %}Profil & Skills – Bewerbungs-Manager{% endblock %}
 
 {% block content %}
-<div class="container container-narrow">
-    <h1>Mein Profil</h1>
-    <p class="subtitle">Diese Daten werden für die Anschreiben-Generierung verwendet.</p>
+<h1>Profil & Kompetenzen</h1>
+<p class="subtitle">Detaillierte Übersicht der beruflichen Laufbahn, technischen Fähigkeiten und Zertifizierungen.</p>
 
-    <form method="POST" class="form">
-        <div class="form-group">
-            <label for="full_name">Vollständiger Name *</label>
-            <input type="text" id="full_name" name="full_name" required
-                   value="{{ profile.full_name if profile else '' }}">
-        </div>
-        <div class="form-group">
-            <label for="email">E-Mail *</label>
-            <input type="email" id="email" name="email" required
-                   value="{{ profile.email if profile else '' }}">
-        </div>
-        <div class="form-group">
-            <label for="phone">Telefon</label>
-            <input type="tel" id="phone" name="phone"
-                   value="{{ profile.phone if profile else '' }}">
-        </div>
-        <div class="form-group">
-            <label for="address">Adresse</label>
-            <textarea id="address" name="address" rows="2">{{ profile.address if profile else '' }}</textarea>
-        </div>
-        <div class="form-group">
-            <label for="resume_text">Lebenslauf / Qualifikationen</label>
-            <textarea id="resume_text" name="resume_text" rows="10"
-                      placeholder="Bildung, Berufserfahrung, Fähigkeiten, Sprachen ...">{{ profile.resume_text if profile else '' }}</textarea>
-        </div>
-        <button type="submit" class="btn btn-primary">Profil speichern</button>
-    </form>
+<div class="tabs" id="profile-tabs">
+    <button class="tab active" onclick="showTab('experience')">Berufserfahrung</button>
+    <button class="tab" onclick="showTab('skills')">Skills & Tech</button>
+    <button class="tab" onclick="showTab('education')">Ausbildung & Zertifikate</button>
+    <button class="tab" onclick="showTab('edit')">Profil bearbeiten</button>
 </div>
+
+<!-- Berufserfahrung -->
+<div id="tab-experience" class="tab-content">
+    <div class="timeline">
+        {% for exp in experience %}
+        <div class="timeline-item">
+            <h3>{{ exp.job_title }}</h3>
+            <div class="time-company">
+                {{ exp.company }}
+                <span style="float:right; font-weight:600">{{ exp.start_date }}{{ ' - ' + exp.end_date if exp.end_date else ' – heute' }}</span>
+            </div>
+            <div class="time-desc">{{ exp.description | replace('\n', '<br>') | safe }}</div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Skills & Tech -->
+<div id="tab-skills" class="tab-content" style="display:none">
+    <div class="grid-2">
+        <div class="card">
+            <h2>Kernkompetenzen</h2>
+            {% for s in skills if s.category == 'Kernkompetenz' %}
+            <div class="skill-row">
+                <span>{{ s.name }}</span>
+                <span class="skill-level">{{ s.level }}</span>
+            </div>
+            {% endfor %}
+        </div>
+        <div class="card">
+            <h2>Sprachen</h2>
+            {% for s in skills if s.category == 'Sprache' %}
+            <div class="skill-row">
+                <span>{{ s.name }}</span>
+                <span class="badge {% if 'Muttersprache' in (s.level or '') %}badge-top{% else %}badge-hoch{% endif %}">{{ s.level }}</span>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    <div class="card" style="margin-top:1rem">
+        <h2>Technologien & Methoden</h2>
+        <div style="margin-top:0.5rem">
+            {% for s in skills if s.category == 'Technologie' %}
+            <span class="tag">{{ s.name }}</span>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<!-- Ausbildung & Zertifikate -->
+<div id="tab-education" class="tab-content" style="display:none">
+    <div class="grid-2">
+        <div class="card">
+            <h2>Zertifizierungen</h2>
+            {% for c in certifications %}
+            <div style="padding:0.6rem 0; border-bottom:1px solid var(--gray-100)">
+                <strong>{{ c.name }}</strong><br>
+                <span class="text-muted">{{ c.issuer }} ({{ c.date }})</span>
+                {% if c.description %}<br><span class="text-muted">{{ c.description }}</span>{% endif %}
+            </div>
+            {% endfor %}
+        </div>
+        <div class="card">
+            <h2>Ausbildung</h2>
+            {% for e in education %}
+            <div style="padding:0.6rem 0">
+                <strong>{{ e.degree }}</strong><br>
+                <span class="text-muted">{{ e.institution }} ({{ e.period }})</span><br>
+                {% if e.focus %}<span>Schwerpunkt: {{ e.focus }}</span><br>{% endif %}
+                {% if e.details %}<span class="text-muted">{{ e.details }}</span>{% endif %}
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<!-- Profil bearbeiten -->
+<div id="tab-edit" class="tab-content" style="display:none">
+    <div class="card">
+        <form method="POST" class="form">
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="full_name">Vollständiger Name *</label>
+                    <input type="text" id="full_name" name="full_name" required
+                           value="{{ profile.full_name if profile else '' }}">
+                </div>
+                <div class="form-group">
+                    <label for="title">Titel / Headline</label>
+                    <input type="text" id="title" name="title"
+                           value="{{ profile.title if profile else '' }}">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="email">E-Mail</label>
+                    <input type="email" id="email" name="email"
+                           value="{{ profile.email if profile else '' }}">
+                </div>
+                <div class="form-group">
+                    <label for="phone">Telefon</label>
+                    <input type="tel" id="phone" name="phone"
+                           value="{{ profile.phone if profile else '' }}">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="address">Standort</label>
+                    <input type="text" id="address" name="address"
+                           value="{{ profile.address if profile else '' }}">
+                </div>
+                <div class="form-group">
+                    <label for="target_location">Ziel-Standort</label>
+                    <input type="text" id="target_location" name="target_location"
+                           value="{{ profile.target_location if profile else '' }}">
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="available_from">Verfügbar ab</label>
+                <input type="text" id="available_from" name="available_from"
+                       value="{{ profile.available_from if profile else '' }}">
+            </div>
+            <div class="form-group">
+                <label for="summary">Zusammenfassung</label>
+                <textarea id="summary" name="summary" rows="3">{{ profile.summary if profile else '' }}</textarea>
+            </div>
+            <div class="form-group">
+                <label for="resume_text">Vollständiger Lebenslauf (Text)</label>
+                <textarea id="resume_text" name="resume_text" rows="12">{{ profile.resume_text if profile else '' }}</textarea>
+            </div>
+            <button type="submit" class="btn btn-primary">Profil speichern</button>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function showTab(name) {
+    document.querySelectorAll('.tab-content').forEach(el => el.style.display = 'none');
+    document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
+    document.getElementById('tab-' + name).style.display = '';
+    event.target.classList.add('active');
+}
+</script>
 {% endblock %}

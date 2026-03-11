@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Unternehmen bearbeiten' if company else 'Neues Unternehmen' }}{% endblock %}
+
+{% block content %}
+<div class="header-row">
+    <h1>{{ 'Unternehmen bearbeiten' if company else 'Neues Zielunternehmen' }}</h1>
+    {% if company %}
+    <form method="POST" action="{{ url_for('delete_company', cid=company.id) }}" onsubmit="return confirm('Wirklich löschen?')">
+        <button type="submit" class="btn btn-danger btn-small">Löschen</button>
+    </form>
+    {% endif %}
+</div>
+
+<div class="card" style="max-width:700px">
+    <form method="POST" class="form">
+        <div class="form-row">
+            <div class="form-group">
+                <label for="name">Unternehmensname *</label>
+                <input type="text" id="name" name="name" required value="{{ company.name if company else '' }}">
+            </div>
+            <div class="form-group">
+                <label for="industry">Branche</label>
+                <input type="text" id="industry" name="industry" value="{{ company.industry if company else '' }}">
+            </div>
+        </div>
+        <div class="form-row-3">
+            <div class="form-group">
+                <label for="city">Stadt</label>
+                <input type="text" id="city" name="city" value="{{ company.city if company else '' }}">
+            </div>
+            <div class="form-group">
+                <label for="country">Land</label>
+                <select id="country" name="country">
+                    <option value="Deutschland" {{ 'selected' if not company or company.country == 'Deutschland' }}>Deutschland</option>
+                    <option value="Spanien" {{ 'selected' if company and company.country == 'Spanien' }}>Spanien</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="strategy">Strategie</label>
+                <select id="strategy" name="strategy">
+                    {% for key, label in strategy_options %}
+                    <option value="{{ key }}" {{ 'selected' if company and company.strategy == key }}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label for="priority">Priorität</label>
+                <select id="priority" name="priority">
+                    {% for key, label in priority_options %}
+                    <option value="{{ key }}" {{ 'selected' if company and company.priority == key }}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            {% if company %}
+            <div class="form-group">
+                <label for="status">Status</label>
+                <select id="status" name="status">
+                    {% for key, label in company_status_options %}
+                    <option value="{{ key }}" {{ 'selected' if company.status == key }}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            {% endif %}
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label for="career_url">Karriereseite URL</label>
+                <input type="url" id="career_url" name="career_url" value="{{ company.career_url if company else '' }}">
+            </div>
+            <div class="form-group">
+                <label for="hr_contact_email">HR Kontakt-E-Mail</label>
+                <input type="email" id="hr_contact_email" name="hr_contact_email" value="{{ company.hr_contact_email if company else '' }}">
+            </div>
+        </div>
+        <div class="form-group">
+            <label for="notes">Notizen</label>
+            <textarea id="notes" name="notes" rows="3">{{ company.notes if company else '' }}</textarea>
+        </div>
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Speichern</button>
+            <a href="{{ url_for('companies') }}" class="btn btn-secondary">Zurück</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

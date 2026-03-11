@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% block title %}Analytics Dashboard{% endblock %}
+
+{% block content %}
+<h1>Analytics Dashboard</h1>
+<p class="subtitle">Visualisiere und analysiere deine Bewerbungsaktivitäten.</p>
+
+{% if stats.total > 0 %}
+<div class="stats">
+    <div class="stat-card">
+        <span class="stat-number">{{ stats.total }}</span>
+        <span class="stat-label">Gesamt</span>
+    </div>
+    <div class="stat-card">
+        <span class="stat-number">{{ stats.sent }}</span>
+        <span class="stat-label">Gesendet</span>
+    </div>
+    <div class="stat-card">
+        <span class="stat-number">{{ stats.interview }}</span>
+        <span class="stat-label">Im Prozess</span>
+    </div>
+    <div class="stat-card">
+        <span class="stat-number">{{ stats.offers }}</span>
+        <span class="stat-label">Angebote</span>
+    </div>
+</div>
+
+<div class="grid-2">
+    <div class="card">
+        <h2>Status-Verteilung</h2>
+        <div class="bar-chart">
+            {% for key, label in status_options %}
+            {% set count = status_counts.get(key, 0) %}
+            {% if count > 0 %}
+            <div class="bar-row">
+                <span class="bar-label">{{ label }}</span>
+                <div class="bar-container">
+                    <div class="bar-fill" style="width: {{ (count / stats.total * 100) | int }}%"></div>
+                </div>
+                <span class="bar-count">{{ count }}</span>
+            </div>
+            {% endif %}
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>Strategie-Verteilung</h2>
+        <div style="margin-top:1rem">
+            <div style="display:flex; gap:1rem">
+                <div class="stat-card" style="flex:1; border-color:#dbeafe">
+                    <span class="stat-number" style="color:#1e40af">{{ de_count }}</span>
+                    <span class="stat-label">Deutschland (Remote)</span>
+                </div>
+                <div class="stat-card" style="flex:1; border-color:#fef3c7">
+                    <span class="stat-number" style="color:#92400e">{{ es_count }}</span>
+                    <span class="stat-label">Spanien (Lokal)</span>
+                </div>
+            </div>
+        </div>
+        <h2 style="margin-top:1.5rem">Zielunternehmen</h2>
+        <p class="text-muted">{{ companies | length }} Unternehmen in der Datenbank</p>
+    </div>
+</div>
+{% else %}
+<div class="empty-state">
+    <h2>Noch keine Bewerbungsdaten vorhanden</h2>
+    <p>Beginne mit dem Tracking deiner Bewerbungen!</p>
+    <a href="{{ url_for('new_application') }}" class="btn btn-primary">Erste Bewerbung erstellen</a>
+</div>
+{% endif %}
+{% endblock %}
