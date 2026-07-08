@@ -51,12 +51,21 @@ export async function generateInfographic(req: InfographicRequest): Promise<Info
     };
   } catch (error) {
     console.error("[NanoBananaAdapter] Chart render failed:", error);
-    const fallback = await renderFallbackInfographic(req);
-    return {
-      imageBuffer: fallback,
-      mimeType: "image/png",
-      altText: `Infografik: ${req.title}`,
-    };
+    try {
+      const fallback = await renderFallbackInfographic(req);
+      return {
+        imageBuffer: fallback,
+        mimeType: "image/png",
+        altText: `Infografik: ${req.title}`,
+      };
+    } catch {
+      // canvas unavailable entirely — skip the infographic instead of crashing
+      return {
+        imageBuffer: Buffer.alloc(0),
+        mimeType: "image/png",
+        altText: `Infografik: ${req.title}`,
+      };
+    }
   }
 }
 

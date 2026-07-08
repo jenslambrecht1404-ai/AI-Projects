@@ -1,6 +1,6 @@
 "use client";
 
-import { AIModel, MODEL_LABELS } from "@/lib/config";
+import type { AIModel } from "@/lib/config";
 
 interface ModelToggleProps {
   value: AIModel;

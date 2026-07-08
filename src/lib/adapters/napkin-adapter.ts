@@ -94,10 +94,12 @@ export async function generateDiagram(req: DiagramRequest): Promise<DiagramResul
       altText: `Diagramm: ${req.title}`,
     };
   } catch (error) {
-    console.error("[NapkinAdapter] Mermaid render failed, using placeholder:", error);
-    const placeholder = buildPlaceholderSvg(req.title, "Diagramm");
+    console.error("[NapkinAdapter] Diagram render failed, skipping image:", error);
+    // Empty buffer signals "no image" — the DOCX generator only embeds
+    // buffers longer than 100 bytes, so the chapter renders without a diagram
+    // instead of embedding non-PNG bytes that corrupt the document.
     return {
-      imageBuffer: Buffer.from(placeholder),
+      imageBuffer: Buffer.alloc(0),
       mimeType: "image/png",
       altText: `Diagramm: ${req.title}`,
     };
@@ -212,14 +214,3 @@ function extractStepsFromDefinition(definition: string): string[] {
   return steps.length > 0 ? steps : ["Start", "Prozess", "Analyse", "Ergebnis"];
 }
 
-function buildPlaceholderSvg(title: string, type: string): string {
-  const { primary, secondary, white } = CORPORATE_CONFIG.colors;
-  return `<svg width="800" height="300" xmlns="http://www.w3.org/2000/svg">
-    <rect width="800" height="300" fill="${white}" rx="8"/>
-    <rect width="800" height="50" fill="${primary}" rx="8"/>
-    <rect y="42" width="800" height="8" fill="${primary}"/>
-    <text x="400" y="33" font-family="Arial" font-size="20" font-weight="bold" fill="${white}" text-anchor="middle">${title}</text>
-    <text x="400" y="175" font-family="Arial" font-size="16" fill="${primary}" text-anchor="middle">[${type} — wird generiert]</text>
-    <rect x="0" y="292" width="800" height="8" fill="${secondary}" rx="0"/>
-  </svg>`;
-}

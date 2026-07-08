@@ -34,18 +34,33 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 300; // 5 min max for Railway
 
-// Helper: send an SSE event
+// Helper: send an SSE event. Swallows enqueue errors so a client that
+// disconnected mid-generation doesn't crash the server-side run.
 function sseEvent(
   controller: ReadableStreamDefaultController,
   event: string,
   data: unknown
 ) {
-  const encoder = new TextEncoder();
-  const payload = `event: ${event}\ndata: ${JSON.stringify(data)}\n\n`;
-  controller.enqueue(encoder.encode(payload));
+  try {
+    const encoder = new TextEncoder();
+    const payload = `event: ${event}\ndata: ${JSON.stringify(data)}\n\n`;
+    controller.enqueue(encoder.encode(payload));
+  } catch {
+    // stream already closed (client disconnected) — nothing to send to
+  }
 }
 
 export async function POST(req: NextRequest) {
+  if (!process.env.ANTHROPIC_API_KEY) {
+    return new Response(
+      JSON.stringify({
+        error:
+          "ANTHROPIC_API_KEY fehlt. Bitte in .env.local eintragen und den Server neu starten. Status prüfen unter /api/health",
+      }),
+      { status: 500, headers: { "Content-Type": "application/json" } }
+    );
+  }
+
   const formData = await req.formData();
 
   const transcriptFile = formData.get("transcript") as File | null;
@@ -225,7 +240,10 @@ export async function POST(req: NextRequest) {
           infographics,
         });
 
-        const docxFilename = `${bookTitle.replace(/[^a-zA-Z0-9üöäÜÖÄ\s]/g, "").replace(/\s+/g, "-")}.docx`;
+        const safeTitle =
+          bookTitle.replace(/[^a-zA-Z0-9üöäßÜÖÄ\s-]/g, "").trim().replace(/\s+/g, "-") ||
+          "Workbook";
+        const docxFilename = `${safeTitle}.docx`;
         const docxPath = join(outputDir, docxFilename);
         await writeFile(docxPath, docxBuffer);
 

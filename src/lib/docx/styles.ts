@@ -6,10 +6,8 @@
 import {
   AlignmentType,
   BorderStyle,
-  HeadingLevel,
   IStylesOptions,
   ShadingType,
-  UnderlineType,
 } from "docx";
 import { CORPORATE_CONFIG } from "@/lib/config";
 

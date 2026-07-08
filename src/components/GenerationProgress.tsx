@@ -42,13 +42,8 @@ export function GenerationProgress({ formData, onReset }: GenerationProgressProp
   const [result, setResult] = useState<SSEComplete | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [activeChapter, setActiveChapter] = useState<number | null>(null);
-  const streamRef = useRef<EventSource | null>(null);
+  const startedRef = useRef(false);
   const scrollRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    startGeneration();
-    return () => streamRef.current?.close();
-  }, []);
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -57,44 +52,61 @@ export function GenerationProgress({ formData, onReset }: GenerationProgressProp
   }, [chapters]);
 
   async function startGeneration() {
-    // Upload formData via fetch, get back a URL for EventSource
-    const response = await fetch("/api/generate", {
-      method: "POST",
-      body: formData,
-    });
+    try {
+      const response = await fetch("/api/generate", {
+        method: "POST",
+        body: formData,
+      });
 
-    if (!response.ok) {
-      setError("Fehler beim Verbinden mit dem Server.");
-      return;
-    }
+      if (!response.ok) {
+        let message = "Fehler beim Verbinden mit dem Server.";
+        try {
+          const body = await response.json();
+          if (body?.error) message = body.error;
+        } catch {
+          // response body was not JSON — keep the generic message
+        }
+        setError(message);
+        return;
+      }
 
-    if (!response.body) {
-      setError("Kein Stream verfügbar.");
-      return;
-    }
+      if (!response.body) {
+        setError("Kein Stream verfügbar.");
+        return;
+      }
 
-    const reader = response.body.getReader();
-    const decoder = new TextDecoder();
-    let buffer = "";
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
 
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
 
-      buffer += decoder.decode(value, { stream: true });
-      const lines = buffer.split("\n");
-      buffer = lines.pop() || "";
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
+        buffer = lines.pop() || "";
 
-      let eventType = "";
-      for (const line of lines) {
-        if (line.startsWith("event: ")) {
-          eventType = line.slice(7).trim();
-        } else if (line.startsWith("data: ")) {
-          const data = JSON.parse(line.slice(6));
-          handleSSEEvent(eventType, data);
-          eventType = "";
+        let eventType = "";
+        for (const line of lines) {
+          if (line.startsWith("event: ")) {
+            eventType = line.slice(7).trim();
+          } else if (line.startsWith("data: ")) {
+            try {
+              const data = JSON.parse(line.slice(6));
+              handleSSEEvent(eventType, data);
+            } catch (parseError) {
+              console.error("SSE parse error:", parseError, line);
+            }
+            eventType = "";
+          }
         }
       }
+    } catch (err) {
+      console.error("Generation failed:", err);
+      setError(
+        err instanceof Error ? err.message : "Verbindung zum Server abgebrochen."
+      );
     }
   }
 
@@ -150,7 +162,14 @@ export function GenerationProgress({ formData, onReset }: GenerationProgressProp
     }
   }
 
-  const chapterList = Array.from(chapters.values()).sort((a, b) => a.number - b.number);
+  useEffect(() => {
+    // Guard against React StrictMode double-invocation in dev — without this,
+    // two parallel generation runs fire and both bill against the API.
+    if (startedRef.current) return;
+    startedRef.current = true;
+    startGeneration();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   if (error) {
     return (

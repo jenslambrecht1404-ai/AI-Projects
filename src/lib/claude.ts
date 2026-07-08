@@ -6,9 +6,34 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { AIModel, AudienceLevel, AUDIENCE_TONE_PROMPTS, CORPORATE_CONFIG } from "@/lib/config";
 
-const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY,
-});
+let anthropicClient: Anthropic | null = null;
+
+function getClient(): Anthropic {
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) {
+    throw new Error(
+      "ANTHROPIC_API_KEY fehlt. Bitte in der Datei .env.local eintragen und den Server neu starten (npm run dev)."
+    );
+  }
+  if (!anthropicClient) {
+    anthropicClient = new Anthropic({ apiKey });
+  }
+  return anthropicClient;
+}
+
+/**
+ * Extracts the first JSON object from a model response, tolerating
+ * markdown fences and surrounding prose.
+ */
+function extractJson(text: string): string {
+  const cleaned = text.replace(/```json\n?|\n?```/g, "").trim();
+  const start = cleaned.indexOf("{");
+  const end = cleaned.lastIndexOf("}");
+  if (start === -1 || end === -1 || end < start) {
+    throw new Error("Die KI-Antwort enthielt kein gültiges JSON.");
+  }
+  return cleaned.slice(start, end + 1);
+}
 
 export interface BookOutline {
   bookTitle: string;
@@ -83,7 +108,7 @@ Erstelle ein JSON-Objekt mit dieser exakten Struktur:
 
 Erstelle genau ${chapterCount} Kapitel. diagramType muss eines von: flowchart, sequence, mindmap, process sein.`;
 
-  const message = await anthropic.messages.create({
+  const message = await getClient().messages.create({
     model,
     max_tokens: 4000,
     system: systemPrompt,
@@ -91,10 +116,11 @@ Erstelle genau ${chapterCount} Kapitel. diagramType muss eines von: flowchart, s
   });
 
   const rawContent = message.content[0];
-  if (rawContent.type !== "text") throw new Error("Unexpected response type from Claude");
+  if (!rawContent || rawContent.type !== "text") {
+    throw new Error("Unerwartete Antwort von Claude beim Erstellen der Buchstruktur.");
+  }
 
-  const jsonText = rawContent.text.replace(/```json\n?|\n?```/g, "").trim();
-  return JSON.parse(jsonText) as BookOutline;
+  return JSON.parse(extractJson(rawContent.text)) as BookOutline;
 }
 
 /**
@@ -137,7 +163,7 @@ Anforderungen:
 - Füge am Ende einen "Kernaussagen"-Block mit 3 prägnanten Bullet-Points ein (formatiert als • Punkt)
 - Schreibe flüssig und professionell`;
 
-  const stream = anthropic.messages.stream({
+  const stream = getClient().messages.stream({
     model,
     max_tokens: 2000,
     system: systemPrompt,
@@ -190,13 +216,21 @@ export async function generateChapterVisualMetadata(params: {
 }): Promise<{ diagramPrompt: string; infographicKeyPoints: string[] }> {
   const { chapterContent, outline, model } = params;
 
-  const message = await anthropic.messages.create({
-    model,
-    max_tokens: 500,
-    messages: [
-      {
-        role: "user",
-        content: `Aus dem folgenden Kapitelinhalt, extrahiere:
+  // Fallback values from the outline — used whenever the AI response is unusable,
+  // so a bad metadata response never aborts the whole generation run.
+  const fallback = {
+    diagramPrompt: outline.summary,
+    infographicKeyPoints: outline.keyPoints,
+  };
+
+  try {
+    const message = await getClient().messages.create({
+      model,
+      max_tokens: 500,
+      messages: [
+        {
+          role: "user",
+          content: `Aus dem folgenden Kapitelinhalt, extrahiere:
 1. Eine kurze Beschreibung für ein "${outline.diagramType}"-Diagramm (max. 1 Satz)
 2. Genau 4-5 prägnante Kernaussagen für eine Infografik (jeweils max. 8 Wörter)
 
@@ -204,14 +238,22 @@ Antworte NUR als JSON: {"diagramPrompt": "...", "infographicKeyPoints": ["...", 
 
 Kapitelinhalt:
 ${chapterContent.substring(0, 1500)}`,
-      },
-    ],
-  });
+        },
+      ],
+    });
 
-  const text = message.content[0].type === "text" ? message.content[0].text : "{}";
-  const parsed = JSON.parse(text.replace(/```json\n?|\n?```/g, "").trim());
-  return {
-    diagramPrompt: parsed.diagramPrompt || outline.summary,
-    infographicKeyPoints: parsed.infographicKeyPoints || outline.keyPoints,
-  };
+    const first = message.content[0];
+    if (!first || first.type !== "text") return fallback;
+
+    const parsed = JSON.parse(extractJson(first.text));
+    return {
+      diagramPrompt: parsed.diagramPrompt || fallback.diagramPrompt,
+      infographicKeyPoints: Array.isArray(parsed.infographicKeyPoints) && parsed.infographicKeyPoints.length > 0
+        ? parsed.infographicKeyPoints
+        : fallback.infographicKeyPoints,
+    };
+  } catch (error) {
+    console.error("[Claude] Visual metadata generation failed, using outline fallback:", error);
+    return fallback;
+  }
 }

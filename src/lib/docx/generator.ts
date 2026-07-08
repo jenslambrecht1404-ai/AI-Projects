@@ -11,6 +11,7 @@
 
 import {
   AlignmentType,
+  Bookmark,
   Document,
   Footer,
   HeadingLevel,
@@ -18,7 +19,6 @@ import {
   InternalHyperlink,
   Packer,
   PageBreak,
-  PageNumber,
   PageNumberElement,
   Paragraph,
   TextRun,
@@ -284,28 +284,31 @@ function buildChapterContent(
   infographicBuffer?: Buffer
 ): Paragraph[] {
   const elements: Paragraph[] = [];
-  const { outline, content, diagramPrompt, infographicKeyPoints } = chapter;
+  const { outline, content, diagramPrompt } = chapter;
 
-  // Chapter anchor (for TOC linking)
+  // Chapter kicker with the bookmark the TOC hyperlink jumps to
   elements.push(
     new Paragraph({
       heading: HeadingLevel.HEADING_1,
       style: "ChapterTitle",
-      // Bookmarks are set via the id in the children
       children: [
-        new TextRun({
-          text: `Kapitel ${outline.number}`,
-          font: CORPORATE_CONFIG.fonts.heading,
-          size: 32,
-          bold: false,
-          color: hex(C.secondary),
+        new Bookmark({
+          id: `chapter-${outline.number}`,
+          children: [
+            new TextRun({
+              text: `Kapitel ${outline.number}`,
+              font: CORPORATE_CONFIG.fonts.heading,
+              size: 32,
+              bold: false,
+              color: hex(C.secondary),
+            }),
+          ],
         }),
       ],
-      // Use the chapter number as bookmark ID
     })
   );
 
-  // Chapter title (actual anchor)
+  // Chapter title
   elements.push(
     new Paragraph({
       heading: HeadingLevel.HEADING_1,
@@ -514,12 +517,17 @@ function buildConclusion(conclusionText: string): Paragraph[] {
     new Paragraph({
       heading: HeadingLevel.HEADING_1,
       children: [
-        new TextRun({
-          text: "Schluss & Ausblick",
-          font: CORPORATE_CONFIG.fonts.heading,
-          size: 56,
-          bold: true,
-          color: hex(C.primary),
+        new Bookmark({
+          id: "conclusion",
+          children: [
+            new TextRun({
+              text: "Schluss & Ausblick",
+              font: CORPORATE_CONFIG.fonts.heading,
+              size: 56,
+              bold: true,
+              color: hex(C.primary),
+            }),
+          ],
         }),
       ],
     }),

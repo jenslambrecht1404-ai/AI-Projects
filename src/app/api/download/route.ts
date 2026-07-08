@@ -20,7 +20,7 @@ export async function GET(req: NextRequest) {
 
   // Sanitize path to prevent directory traversal
   const safeJobId = jobId.replace(/[^a-zA-Z0-9-]/g, "");
-  const safeFile = file.replace(/[^a-zA-Z0-9._\-äöüÄÖÜ]/g, "");
+  const safeFile = file.replace(/[^a-zA-Z0-9._\-äöüßÄÖÜ]/g, "");
 
   if (!safeJobId || !safeFile) {
     return NextResponse.json({ error: "Invalid path" }, { status: 400 });
