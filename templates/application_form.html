@@ -136,7 +136,11 @@ document.getElementById('generate-btn')?.addEventListener('click', async functio
 document.getElementById('send-btn')?.addEventListener('click', function(e) {
     e.preventDefault();
     if (confirm('Bewerbung jetzt per E-Mail versenden?')) {
-        window.location = '{{ url_for("send_email", app_id=app.id) }}';
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = '{{ url_for("send_email", app_id=app.id) }}';
+        document.body.appendChild(form);
+        form.submit();
     }
 });
 </script>

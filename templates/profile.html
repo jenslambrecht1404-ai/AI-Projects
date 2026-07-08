@@ -6,10 +6,10 @@
 <p class="subtitle">Detaillierte Übersicht der beruflichen Laufbahn, technischen Fähigkeiten und Zertifizierungen.</p>
 
 <div class="tabs" id="profile-tabs">
-    <button class="tab active" onclick="showTab('experience')">Berufserfahrung</button>
-    <button class="tab" onclick="showTab('skills')">Skills & Tech</button>
-    <button class="tab" onclick="showTab('education')">Ausbildung & Zertifikate</button>
-    <button class="tab" onclick="showTab('edit')">Profil bearbeiten</button>
+    <button class="tab active" onclick="showTab('experience', this)">Berufserfahrung</button>
+    <button class="tab" onclick="showTab('skills', this)">Skills & Tech</button>
+    <button class="tab" onclick="showTab('education', this)">Ausbildung & Zertifikate</button>
+    <button class="tab" onclick="showTab('edit', this)">Profil bearbeiten</button>
 </div>
 
 <!-- Berufserfahrung -->
@@ -148,11 +148,11 @@
 
 {% block scripts %}
 <script>
-function showTab(name) {
+function showTab(name, btn) {
     document.querySelectorAll('.tab-content').forEach(el => el.style.display = 'none');
     document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
     document.getElementById('tab-' + name).style.display = '';
-    event.target.classList.add('active');
+    btn.classList.add('active');
 }
 </script>
 {% endblock %}

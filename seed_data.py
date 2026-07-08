@@ -5,7 +5,6 @@ import models
 
 
 def seed():
-    models.init_db()
     conn = models.get_db()
     now = datetime.now().isoformat()
 

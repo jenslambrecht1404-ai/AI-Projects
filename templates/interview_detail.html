@@ -14,8 +14,8 @@
 {% for q in questions %}
 <div class="qa-card">
     <div class="qa-category">{{ q.get('category', 'Allgemein') }}</div>
-    <div class="qa-question">{{ q.question }}</div>
-    <div class="qa-answer">{{ q.suggested_answer }}</div>
+    <div class="qa-question">{{ q.get('question', '') }}</div>
+    <div class="qa-answer">{{ q.get('suggested_answer', '') }}</div>
 </div>
 {% endfor %}
 {% else %}
